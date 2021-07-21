@@ -2,14 +2,13 @@ package com.bridgelabz.userregistration.service;
 
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Optional;
-
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import com.bridgelabz.userregistration.UserRegistrationApplication;
 import com.bridgelabz.userregistration.dto.ForgotPwdDto;
 import com.bridgelabz.userregistration.dto.LoginDto;
 import com.bridgelabz.userregistration.dto.UserDto;
@@ -18,6 +17,9 @@ import com.bridgelabz.userregistration.jwtoperations.Jms;
 import com.bridgelabz.userregistration.jwtoperations.JwtOperations;
 import com.bridgelabz.userregistration.model.UserEntity;
 import com.bridgelabz.userregistration.repository.UserRepository;
+
+import lombok.extern.slf4j.Slf4j;
+@Slf4j
 @Service
 public class UserServiceImpl implements UserService{
 	@Autowired
@@ -42,9 +44,9 @@ public class UserServiceImpl implements UserService{
 		UserEntity entity=modelmapper.map(dto, UserEntity.class);
 		entity.setRegisteredDate(LocalDateTime.now());
 		entity.setUpdatedDate(LocalDateTime.now());
-	   // entity.setPassword(pwdencoder.encode(entity.getPassword()));
 		entity.setPassword(pwdencoder.encode(entity.getPassword()));
 		userrepo.save(entity);
+		log.info(entity.getFirstName()+" registered "+"date:"+entity.getRegisteredDate());
 		String body="http://localhost:8080/verifyemail/"+jwt.jwtToken(entity.getUserid());
 		System.out.println(body);
 		jms.sendEmail(entity.getEmail(),"verification email",body);
@@ -61,6 +63,7 @@ public class UserServiceImpl implements UserService{
 	@Override
 	public UserEntity verify(String token) {
 		long id=jwt.parseJWT(token);
+		log.debug(token);
 		UserEntity user=userrepo.isIdExists(id).orElseThrow(() -> new CustomException("user not exists",HttpStatus.OK,id,"false"));
 		user.setVerifyEmail(true);
 		userrepo.save(user);
