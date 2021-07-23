@@ -1,5 +1,6 @@
 package com.bridgelabz.userregistration.model;
 
+
 import java.time.LocalDateTime;
 
 import javax.persistence.Column;
@@ -13,7 +14,8 @@ import lombok.Data;
 @Data
 @Entity
 @Table(name="user_registration")
-public class UserEntity  {
+public class UserEntity {
+
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private Long userid;

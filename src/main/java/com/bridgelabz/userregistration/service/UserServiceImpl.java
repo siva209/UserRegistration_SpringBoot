@@ -2,6 +2,8 @@ package com.bridgelabz.userregistration.service;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
+
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -17,6 +19,7 @@ import com.bridgelabz.userregistration.jwtoperations.Jms;
 import com.bridgelabz.userregistration.jwtoperations.JwtOperations;
 import com.bridgelabz.userregistration.model.UserEntity;
 import com.bridgelabz.userregistration.repository.UserRepository;
+import com.bridgelabz.userregistration.response.Response;
 
 import lombok.extern.slf4j.Slf4j;
 @Slf4j
@@ -35,12 +38,14 @@ public class UserServiceImpl implements UserService{
 	private ModelMapper modelmapper;
 
 	
-	@Override
-	public UserEntity registerUser(UserDto dto) {
+	//@Override
+	public Response registerUser(UserDto dto) {
 		
-		isEmailExists(dto.getEmail());
-		//UserEntity entity=new UserEntity();
-//		BeanUtils.copyProperties(dto, entity);
+		Optional<UserEntity>isuserprsent=userrepo.isEmailExists(dto.getEmail());
+		if(isuserprsent.isPresent()) {
+			throw new CustomException("invalid details",null,400,"true");
+		}
+		else {
 		UserEntity entity=modelmapper.map(dto, UserEntity.class);
 		entity.setRegisteredDate(LocalDateTime.now());
 		entity.setUpdatedDate(LocalDateTime.now());
@@ -50,7 +55,8 @@ public class UserServiceImpl implements UserService{
 		String body="http://localhost:8080/verifyemail/"+jwt.jwtToken(entity.getUserid());
 		System.out.println(body);
 		jms.sendEmail(entity.getEmail(),"verification email",body);
-		return entity;
+		return new Response("regitration sucess",entity,201,"true");
+	}
 	}
 	
 	@Override
@@ -79,25 +85,25 @@ public class UserServiceImpl implements UserService{
 
 
 	@Override
-	public UserEntity loginUser(LoginDto dto) {
+	public Response loginUser(LoginDto dto) {
 		UserEntity  user=userrepo.getUserByEmail(dto.getEmail()).orElseThrow(() -> new CustomException("login failed",HttpStatus.OK,null,"false"));
 		boolean ispwd=pwdencoder.matches(dto.getPassword(),user.getPassword());
 		if(ispwd==false) {
 			throw new CustomException("login failed",HttpStatus.OK,null,"false");
 		} else {
 			String token=jwt.jwtToken(user.getUserid());
-			return user;
+			return new Response(" Successfully login user ", user, 200, token);
 			
 		}
+		
+		
+		
 	}
 	public UserEntity getUser(String token) {
 		long id=jwt.parseJWT(token);
 		return userrepo.getUserById(id).orElseThrow(() -> new CustomException("user not exists",HttpStatus.OK,id,"false"));
 	}
-	@Override
-	public List<UserEntity> getall() {
-		return userrepo.getAllUsers().orElseThrow(() -> new CustomException("no users present", HttpStatus.OK,null,"false"));
-	}
+	
 
 	@Override
 	public UserEntity getUserById(long userId) {
@@ -111,4 +117,21 @@ public class UserServiceImpl implements UserService{
 		jms.sendEmail(user.getEmail(),"Reset Password",body);
 		return "success";
 	}
+
+
+
+	@Override
+	public Response getAllUser() {
+		List<UserEntity> isUserPresent = userrepo.findAll();
+		return new Response("users are",isUserPresent,200,"true");
 	}
+
+	@Override
+	public boolean isIdPresent(long userId) {
+		UserEntity user=userrepo.getUserById(userId).orElseThrow(() -> new CustomException("user not exists",HttpStatus.OK,userId,"false"));
+		if(user.getEmail()!=null)
+		return true;
+		return false;
+	}
+	}
+	

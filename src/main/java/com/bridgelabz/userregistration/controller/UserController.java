@@ -37,14 +37,9 @@ public class UserController {
 	
 	@PostMapping("/registeruser")
 	@ResponseStatus(HttpStatus.CREATED)
-	public ResponseEntity<Response> registerUser(@RequestBody UserDto dto,BindingResult result)
-	{
-
-			if(result.hasErrors())
-			return new ResponseEntity<Response>(new Response("invalid details",null,400,"true"),HttpStatus.BAD_REQUEST);
-			UserEntity user=userimpl.registerUser(dto);
-			System.out.println(user);
-			return new ResponseEntity<Response>(new Response("regitration sucess",user,201,"true"),HttpStatus.CREATED);		
+	public ResponseEntity<Response> registerUser(@RequestBody UserDto dto,BindingResult result){
+		Response response=userimpl.registerUser(dto);
+		return new ResponseEntity<Response>(response,HttpStatus.OK);
 	}
 	
 	/**
@@ -66,27 +61,21 @@ public class UserController {
 	@PostMapping("/loginuser")
 	public ResponseEntity<Response> loginUser(@RequestBody LoginDto dto,BindingResult result)
 	{
-		System.out.println("hitting");
-		if(result.hasErrors())
-		return new ResponseEntity<Response>(new Response("invalid details",null,400,"true"),HttpStatus.BAD_REQUEST);
-		UserEntity user=userimpl.loginUser(dto);
-		String token =jwt.jwtToken(user.getUserid());
-		System.out.println(token);
-		return new ResponseEntity<Response>(new Response(token,userimpl.loginUser(dto),200,"true"),HttpStatus.OK);
+		Response respDTO =userimpl.loginUser(dto);
+		return new ResponseEntity<Response>(respDTO, HttpStatus.OK);
 	}
-	
 	
 	/**
 	 * Get All Users: used to display all the users in the table
 	 * @return list of users
 	 */
+
 	@GetMapping("/getallusers")
-	public ResponseEntity<Response> getAllUsers()
-	{
-		List<UserEntity> users=userimpl.getall();
-		return new ResponseEntity<Response>(new Response("users are",users,200,"true"),HttpStatus.OK);
+	public ResponseEntity<Response> getAllContacts() {
+		Response respDTO = userimpl.getAllUser();
+		return new ResponseEntity<Response>(respDTO, HttpStatus.OK);
 	}
-	
+
 	@GetMapping("/getuser")
 	public ResponseEntity<Response> getuser(@RequestHeader String token)
 	{
